@@ -1,71 +1,93 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>تحديد موقع الذكرى</title>
+<meta charset="UTF-8" />
+<title>نهمة – تحديد موقع الذكرى</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
-  <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-  <style>
-    html,body{height:100%;margin:0}
-    #map{height:100%}
-    .bar{
-      position:fixed;top:10px;left:10px;right:10px;z-index:9999;
-      background:#111;color:#fff;padding:10px 12px;border-radius:10px;
-      font:14px system-ui;display:flex;gap:10px;align-items:center;justify-content:space-between
-    }
-    .bar span{direction:ltr;font-family:ui-monospace,monospace;background:#222;padding:6px 8px;border-radius:8px}
-    .bar button{background:#fff;color:#111;border:0;border-radius:8px;padding:7px 10px;cursor:pointer}
-    .bar button:disabled{opacity:.5;cursor:not-allowed}
-  </style>
+<style>
+body{
+  margin:0;
+  font-family:system-ui;
+}
+
+/* ✅ أهم تعديل */
+#map{
+  height:100vh;
+}
+
+/* شريط فوق الخريطة */
+.panel{
+  position:fixed;
+  bottom:20px;
+  left:50%;
+  transform:translateX(-50%);
+  background:#fff;
+  padding:10px 14px;
+  border-radius:10px;
+  box-shadow:0 5px 15px rgba(0,0,0,.2);
+  display:flex;
+  gap:10px;
+  align-items:center;
+  z-index:999;
+}
+
+.coords{
+  font-family:monospace;
+  direction:ltr;
+}
+
+button{
+  padding:6px 10px;
+  border:0;
+  border-radius:6px;
+  background:#111;
+  color:#fff;
+  cursor:pointer;
+}
+</style>
 </head>
-<body>
 
-<div class="bar">
-  <div>اضغطي على الخريطة لوضع الدبوس</div>
-  <span id="coords">—</span>
-  <button id="copy" disabled>نسخ</button>
-</div>
+<body>
 
 <div id="map"></div>
 
+<div class="panel">
+  <span class="coords" id="coords">اضغطي على الخريطة</span>
+  <button id="copyBtn" disabled>نسخ</button>
+</div>
+
 <script>
-  // إذا Leaflet ما تحمّل (سبب الخريطة الفاضية غالبًا)
-  if (!window.L) {
-    document.body.innerHTML =
-      '<div style="padding:20px;font:16px system-ui">' +
-      '⚠️ الخريطة ما اشتغلت لأن Leaflet ما تحمّل.<br><br>' +
-      'جرّبي: Ctrl+F5 (تحديث قوي) أو افتحي الرابط بمتصفح/نافذة خاصة.' +
-      '</div>';
-    throw new Error("Leaflet not loaded");
-  }
+const map = L.map("map").setView([26.4207, 50.0888], 12);
 
-  const coordsEl = document.getElementById("coords");
-  const copyBtn = document.getElementById("copy");
+L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
 
-  const map = L.map("map").setView([26.4207, 50.0888], 12);
-  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19 }).addTo(map);
+let marker=null;
+let last="";
 
-  let marker = null, last = "";
+const coordsEl=document.getElementById("coords");
+const btn=document.getElementById("copyBtn");
 
-  map.on("click", (e) => {
-    const lat = e.latlng.lat.toFixed(6);
-    const lng = e.latlng.lng.toFixed(6);
-    last = ${lat}, ${lng};
-    coordsEl.textContent = last;
-    copyBtn.disabled = false;
+map.on("click",e=>{
+  const lat=e.latlng.lat.toFixed(6);
+  const lng=e.latlng.lng.toFixed(6);
 
-    if (marker) marker.setLatLng(e.latlng);
-    else marker = L.marker(e.latlng).addTo(map);
-  });
+  last=`${lat}, ${lng}`;
+  coordsEl.textContent=last;
+  btn.disabled=false;
 
-  copyBtn.onclick = async () => {
-    try { await navigator.clipboard.writeText(last); copyBtn.textContent="تم ✓"; }
-    catch { prompt("انسخي الإحداثيات:", last); }
-    setTimeout(()=>copyBtn.textContent="نسخ", 1200);
-  };
+  if(marker) marker.setLatLng(e.latlng);
+  else marker=L.marker(e.latlng).addTo(map);
+});
+
+btn.onclick=async()=>{
+  await navigator.clipboard.writeText(last);
+  btn.textContent="✓";
+  setTimeout(()=>btn.textContent="نسخ",1000);
+};
 </script>
 
 </body>
