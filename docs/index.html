@@ -1,1 +1,113 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+  <meta charset="UTF-8" />
+  <title>نهمة – تحديد موقع الذكرى</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+  <!-- Leaflet -->
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+  />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont;
+      background: #f6f6f6;
+    }
+
+    header {
+      background: #111;
+      color: #fff;
+      padding: 12px 16px;
+      font-size: 14px;
+    }
+
+    #map {
+      height: calc(100vh - 130px);
+    }
+
+    .panel {
+      background: #fff;
+      padding: 12px 16px;
+      border-top: 1px solid #ddd;
+    }
+
+    .coords {
+      font-family: monospace;
+      background: #f1f1f1;
+      padding: 8px;
+      border-radius: 6px;
+      margin-bottom: 8px;
+      direction: ltr;
+    }
+
+    button {
+      padding: 8px 12px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      background: #111;
+      color: #fff;
+    }
+
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  </style>
+</head>
+
+<body>
+
+<header>
+  حددي موقع الذكرى – اضغطي على الخريطة
+</header>
+
+<div id="map"></div>
+
+<div class="panel">
+  <div class="coords" id="coords">لم يتم اختيار موقع بعد</div>
+  <button id="copyBtn" disabled>نسخ الإحداثيات</button>
+</div>
+
+<script>
+  const map = L.map("map").setView([26.4207, 50.0888], 12);
+
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    attribution: "© OpenStreetMap"
+  }).addTo(map);
+
+  let marker = null;
+  let lastCoords = "";
+
+  const coordsEl = document.getElementById("coords");
+  const copyBtn = document.getElementById("copyBtn");
+
+  map.on("click", function (e) {
+    const lat = e.latlng.lat.toFixed(6);
+    const lng = e.latlng.lng.toFixed(6);
+
+    lastCoords = ${lat}, ${lng};
+    coordsEl.textContent = lastCoords;
+    copyBtn.disabled = false;
+
+    if (marker) {
+      marker.setLatLng(e.latlng);
+    } else {
+      marker = L.marker(e.latlng).addTo(map);
+    }
+  });
+
+  copyBtn.addEventListener("click", async () => {
+    await navigator.clipboard.writeText(lastCoords);
+    copyBtn.textContent = "تم النسخ ✓";
+    setTimeout(() => (copyBtn.textContent = "نسخ الإحداثيات"), 1500);
+  });
+</script>
+
+</body>
+</html>
