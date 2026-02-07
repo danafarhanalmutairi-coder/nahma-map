@@ -1,66 +1,93 @@
-<!DOCTYPE html>
-<html lang="ar">
-<head>
-  <meta charset="UTF-8" />
-  <title>نهمة | تحديد موقع الذكرى</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+const coordsEl = $("coordsValue");
+  const btnCopy  = $("btnCopy");
+  const btnClear = $("btnClear");
+  const btnOpen  = $("btnOpen");
+  const toastEl  = $("toast");
 
-  <!-- Leaflet -->
-  <link
-    rel="stylesheet"
-    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-  />
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  function setStatus(text) {
+    statusEl.textContent = text;
+  }
 
-  <style>
-    body {
-      margin: 0;
-      font-family: system-ui, sans-serif;
-      background: #0f0f0f;
-      color: #fff;
-    }
+  function toast(msg, type="ok") {
+    toastEl.className = "toast show " + (type === "warn" ? "warn" : "ok");
+    toastEl.innerHTML = msg;
+    clearTimeout(toastEl._t);
+    toastEl._t = setTimeout(() => toastEl.classList.remove("show"), 1800);
+  }
 
-    header {
-      padding: 14px 20px;
-      background: #111;
-      font-size: 14px;
-      text-align: right;
-    }
-
-    #map {
-      height: calc(100vh - 56px);
-    }
-  </style>
-</head>
-
-<body>
-
-<header>
-  حددي موقع الذكرى — اضغطي على الخريطة لوضع الدبوس
-</header>
-
-<div id="map"></div>
-
-<script>
-  const map = L.map("map").setView([26.4207, 50.0888], 12);
+  // ===== Map =====
+  const map = L.map("map", { zoomControl: true }).setView([26.4207, 50.0888], 12);
 
   L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
     attribution: "© OpenStreetMap"
   }).addTo(map);
 
   let marker = null;
+  let lastLat = null;
+  let lastLng = null;
+  let lastText = "";
 
-  map.on("click", function (e) {
-    if (marker) {
-      map.removeLayer(marker);
+  function setPoint(latlng) {
+    if (marker) map.removeLayer(marker);
+    marker = L.marker(latlng).addTo(map);
+
+    lastLat = latlng.lat;
+    lastLng = latlng.lng;
+
+    const lat = lastLat.toFixed(6);
+    const lng = lastLng.toFixed(6);
+    lastText = ${lat}, ${lng};
+
+    coordsEl.textContent = lastText;
+    setStatus("تم تحديد الموقع ✓");
+
+    btnCopy.disabled = false;
+    btnClear.disabled = false;
+    btnOpen.disabled = false;
+
+    marker.bindPopup(`<b>تم التحديد</b><br><span style="direction:ltr;display:inline-block">${lastText}</span>`).openPopup();
+  }
+
+  map.on("click", (e) => {
+    setPoint(e.latlng);
+  });
+
+  // ===== Buttons =====
+  btnCopy.addEventListener("click", async () => {
+    if (!lastText) return;
+    try{
+      await navigator.clipboard.writeText(lastText);
+      toast(`✅ تم نسخ الإحداثيات: <span class="muted" style="direction:ltr;display:inline-block">${lastText}</span>`);
+      setStatus("تم النسخ ✓");
+    }catch(err){
+      // fallback: select text
+      const range = document.createRange();
+      range.selectNodeContents(coordsEl);
+      const sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
+      toast("⚠️ ما قدرت أنسخ تلقائيًا. انسخيها يدويًا من البطاقة فوق.", "warn");
+      setStatus("انسخي يدويًا");
     }
+  });
 
-    marker = L.marker(e.latlng).addTo(map);
+  btnClear.addEventListener("click", () => {
+    if (marker) map.removeLayer(marker);
+    marker = null;
+    lastLat = lastLng = null;
+    lastText = "";
+    coordsEl.textContent = "—";
+    btnCopy.disabled = true;
+    btnClear.disabled = true;
+    btnOpen.disabled = true;
+    setStatus("تم المسح");
+    toast("🧹 تم مسح التحديد");
+  });
 
-    const lat = e.latlng.lat.toFixed(6);
-    const lng = e.latlng.lng.toFixed(6);
-
-    alert(`الإحداثيات:\n${lat}, ${lng}`);
+  btnOpen.addEventListener("click", () => {
+    if (!lastText) return;
+    const url = https://www.openstreetmap.org/?mlat=${lastLat}&mlon=${lastLng}#map=18/${lastLat}/${lastLng};
+    window.open(url, "_blank");
   });
 </script>
 
