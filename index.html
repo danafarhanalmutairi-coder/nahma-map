@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>اختاري موقع الذكرى</title>
+
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <style>
+    body { margin:0; font-family: system-ui, -apple-system, "Segoe UI", Arial; }
+    .topbar{
+      padding:12px 14px;
+      background:#111;
+      color:#fff;
+      font-size:14px;
+      line-height:1.4;
+    }
+    .topbar b{ font-size:15px; }
+    #map { height: calc(100vh - 64px); }
+    .hint { opacity:.85; margin-top:4px; }
+  </style>
+</head>
+<body>
+
+  <div class="topbar">
+    <b>حددي موقع الذكرى</b>
+    <div class="hint">اضغطي على الخريطة لوضع الدبوس. بعدها انسخي الإحداثيات.</div>
+  </div>
+
+  <div id="map"></div>
+
+  <script>
+    // مركز تقريبي للشرقية
+    const map = L.map('map').setView([26.35, 50.20], 10);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '&copy; OpenStreetMap'
+    }).addTo(map);
+
+    let marker = null;
+
+    function copyToClipboard(text){
+      // طريقة نسخ تدعم أغلب المتصفحات
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(text);
+      } else {
+        const ta = document.createElement("textarea");
+        ta.value = text;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand("copy");
+        ta.remove();
+      }
+    }
+
+    map.on('click', function(e) {
+      if (marker) map.removeLayer(marker);
+      marker = L.marker(e.latlng).addTo(map);
+
+      const lat = e.latlng.lat.toFixed(6);
+      const lng = e.latlng.lng.toFixed(6);
+      const coords = ${lat}, ${lng};
+
+      copyToClipboard(coords);
+
+      marker.bindPopup(
+        `<div style="font-size:14px">
+          <b>تم النسخ ✅</b><br>
+          <div style="margin-top:6px">الإحداثيات:</div>
+          <div style="font-family:monospace; margin-top:4px">${coords}</div>
+          <div style="opacity:.75; margin-top:6px">الصقيها في الفورم.</div>
+        </div>`
+      ).openPopup();
+    });
+  </script>
+
+</body>
+</html>
