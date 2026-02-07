@@ -1,113 +1,51 @@
-let marker = null;
-    let lastCoordsText = "";
-    let lastLatLng = null;
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>نهـمـة | تحديد موقع الذكرى</title>
 
-    const statusEl = document.getElementById("status");
-    const coordsEl  = document.getElementById("coordsValue");
-    const btnCopy   = document.getElementById("btnCopy");
-    const btnClear  = document.getElementById("btnClear");
-    const btnLocate = document.getElementById("btnLocate");
-    const btnGmaps  = document.getElementById("btnGmaps");
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+  />
 
-    function setStatus(msg) {
-      statusEl.textContent = msg;
-    }
+  <style>
+    body { margin:0; font-family: system-ui; background:#0b0b0b; color:#fff; }
+    .topbar { background:#111; padding:12px; font-size:14px; }
+    #map { height: calc(100vh - 60px); }
+  </style>
+</head>
 
-    function setPoint(latlng) {
-      const lat = latlng.lat.toFixed(6);
-      const lng = latlng.lng.toFixed(6);
-      lastCoordsText = ${lat}, ${lng};
-      lastLatLng = { lat, lng };
+<body>
 
-      if (marker) map.removeLayer(marker);
-      marker = L.marker(latlng).addTo(map);
+<div class="topbar">
+  اضغطي على الخريطة لوضع الدبوس – انسخي الإحداثيات
+</div>
 
-      coordsEl.textContent = lastCoordsText;
+<div id="map"></div>
 
-      btnCopy.disabled = false;
-      btnClear.disabled = false;
-      btnGmaps.disabled = false;
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-      marker.bindPopup(`
-        <strong>تم تحديد الموقع ✅</strong><br/>
-        <span style="font-family:monospace;direction:ltr;display:inline-block;margin-top:6px;">
-          ${lastCoordsText}
-        </span>
-        <div style="margin-top:8px;font-size:12px;opacity:.85;">
-          تقدرين تنسخين من الزر فوق أو من المربع أسفل.
-        </div>
-      `).openPopup();
+<script>
+  const map = L.map('map').setView([26.4207, 50.0888], 11);
 
-      setStatus("تم تحديد الموقع ✅ انسخي الإحداثيات.");
-    }
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap'
+  }).addTo(map);
 
-    // ضغط على الخريطة
-    map.on("click", function (e) {
-      setPoint(e.latlng);
-    });
+  let marker = null;
 
-    // زر النسخ (مع Plan B لو المتصفح منع Clipboard)
-    btnCopy.addEventListener("click", async () => {
-      if (!lastCoordsText) return;
-
-      try {
-        await navigator.clipboard.writeText(lastCoordsText);
-        setStatus("تم النسخ ✅");
-      } catch (err) {
-        // Plan B: تحديد النص تلقائياً للمستخدم عشان ينسخه يدويًا
-        setStatus("النسخ التلقائي ما اشتغل هنا — انسخي يدويًا من المربع 👇");
-        // تحديد النص
-        const range = document.createRange();
-        range.selectNodeContents(coordsEl);
-        const sel = window.getSelection();
-        sel.removeAllRanges();
-        sel.addRange(range);
-      }
-    });
-
-    // فتح في Google Maps
-    btnGmaps.addEventListener("click", () => {
-      if (!lastLatLng) return;
-      const url = https://www.google.com/maps?q=${lastLatLng.lat},${lastLatLng.lng};
-      window.open(url, "_blank");
-    });
-
-    // مسح الدبوس
-    btnClear.addEventListener("click", () => {
-      if (marker) map.removeLayer(marker);
-      marker = null;
-      lastCoordsText = "";
-      lastLatLng = null;
-      coordsEl.textContent = "—";
-      btnCopy.disabled = true;
-      btnClear.disabled = true;
-      btnGmaps.disabled = true;
-      setStatus("تم المسح. اضغطي على الخريطة لتحديد موقع جديد.");
-    });
-
-    // تحديد الموقع الحالي (GPS)
-    btnLocate.addEventListener("click", () => {
-      if (!navigator.geolocation) {
-        setStatus("جهازك ما يدعم GPS.");
-        return;
-      }
-
-      setStatus("جاري تحديد موقعك… انتظري شوي ⏳");
-
-      navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          const latlng = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-          map.setView(latlng, 15);
-          setPoint(latlng);
-          setStatus("هذا موقعك الحالي ✅ إذا مو دقيق، عدّلي بالدبوس.");
-        },
-        (err) => {
-          setStatus("ما قدرنا نجيب موقعك. فعّلي إذن الموقع/Location ثم جرّبي.");
-        },
-        { enableHighAccuracy: true, timeout: 10000 }
-      );
-    });
-  </script>
+  map.on('click', function(e) {
+    if (marker) map.removeLayer(marker);
+    marker = L.marker(e.latlng).addTo(map);
+    alert(
+      'الإحداثيات:\\n' +
+      e.latlng.lat.toFixed(6) + ', ' +
+      e.latlng.lng.toFixed(6)
+    );
+  });
+</script>
 
 </body>
 </html>
